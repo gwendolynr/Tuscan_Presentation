@@ -1,0 +1,118 @@
+---
+title: "Tuscon Presentation Data Visualization"
+Date: April 11, 2017
+output:
+  html_document: default
+  html_notebook: default
+Author: Gwendolyn Reynolds
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+# Load packages 
+library(knitr)
+library(tidyverse)
+library(readxl)
+library(scales)
+library(forcats)
+library(lubridate)
+library(stringr)
+
+# Echo=FALSE means the code does not show up in the document
+# Caching allows you to re-run the report quickly
+knitr::opts_chunk$set(echo=FALSE)
+knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_chunk$set(message = F) #Use this to suppress all messages from chunks for finalized report
+knitr::opts_chunk$set(warning = F) #Use this to suppress all warnings from chunks for finalized report
+
+
+# Settting the default resolution of plots
+knitr::opts_chunk$set(dpi = 600)
+
+# You can't just set the working directory when using .rmd in Knitr, so we set the root directory
+# This is to make it easy to load data from the google drive
+# All figures and cache are still saving in the same directory as the .rmd (don't commit these)
+setwd("~/Google Drive/SI/DataScience/Presentations/Tuscon_April2017")
+knitr::opts_knit$set(root.dir = '~/Google Drive/SI/DataScience/Presentations/Tuscon_April2017')
+
+# Sorenson Impact design: a list of colors we use in ggplot
+SI_design <- list(color_1 = "#005060", color_medium = "#1A818F", color_light = "#25AFC1", color_grey = "#58585A", color_light_grey = "E6E7E8")
+
+# This will fill bar colors with Sorenson Impact colors and default to theme_minimal
+update_geom_defaults("bar", list(fill = SI_design$color_1))
+update_geom_defaults("smooth", list(colour = SI_design$color_1, fill = SI_design$color_light, alpha = I(2/10)))
+update_geom_defaults("point", list(colour = SI_design$color_1, fill = SI_design$color_1))
+theme_set(theme_minimal())
+
+```
+
+Analyzing Arizona Crime data from 1960 to 2014. From the Uniform Crime Reporting Statistics--UCR Data Online: http://www.ucrdatatool.gov/
+Sources: FBI, Uniform Crime Reports, prepared by the National Archive of Criminal Justice Data 
+Date of download: Apr 11 2017 
+
+```{r read in data, echo=FALSE}
+
+azcrime <- read.csv("./CrimeStatebyStatev2.csv")
+
+azcrime2 <- read.csv("./CrimeStatebyStatev3.csv")
+
+azcrime %>% 
+  group_by(Year) %>%
+  ggplot(aes(x = Year, y = Violent_Crime_rate)) +
+  geom_smooth(method="loess", alpha = I(2/10)) +
+  ylab("Violent Crime per 100,000") + xlab("Year") +
+  ggtitle("Violent Crime in Arizona") 
+
+azcrime %>% 
+  group_by(Year) %>%
+  ggplot(aes(x = Year, y = Property_crime_rate)) +
+  geom_point() +
+  geom_smooth(method="loess", alpha = I(2/10)) +
+  ylab("Property Crime per 100,000") + xlab("Year") +
+  ggtitle("Property Crime in Arizona") 
+
+azcrime2 %>%
+  filter(type=="Violent_Crime_rate" | type=="Property_Crime_rate") %>%
+  group_by(Year) %>%
+  ggplot(aes(x = Year, y = rate, color = type)) +
+    geom_point() +
+    ylab("Property and Violent Crime per 100,000") + xlab("Year") +
+    ggtitle("Property and Violent Crime in Arizona") 
+ggsave(filename = "~/Google Drive/SI/DataScience/Presentations/Tuscon_April2017/point.png", width=6.0, height=6.0/1.5)
+
+azcrime2 %>%
+  filter(type=="Violent_Crime_rate" | type=="Property_Crime_rate") %>%
+  group_by(Year) %>%
+  ggplot(aes(x = Year, y = rate, color = type)) +
+    geom_smooth() +
+    ylab("Property and Violent Crime per 100,000") + xlab("Year") +
+    ggtitle("Property and Violent Crime in Arizona") 
+ggsave(filename = "~/Google Drive/SI/DataScience/Presentations/Tuscon_April2017/linegraph.png", width=6.0, height=6.0/1.5)
+
+azcrime2 %>%
+  filter(type!="Violent_Crime_rate" & type!="Property_Crime_rate") %>%
+  group_by(Year) %>%
+  ggplot(aes(x = Year, y = rate, color = type)) +
+    geom_smooth() +
+    ylab("Property and Violent Crime per 100,000") + xlab("Year") +
+    ggtitle("Property and Violent Crime in Arizona") 
+ggsave(filename = "~/Google Drive/SI/DataScience/Presentations/Tuscon_April2017/linegraphall.png", width=6.0, height=6.0/1.5)
+
+azcrime2 %>%
+  filter(type=="Violent_Crime_rate" | type=="Property_Crime_rate") %>%
+  group_by(Year) %>%
+  ggplot(aes(x = Year, y = rate, fill = type)) +
+    geom_bar(stat="identity", position="dodge") +
+    ylab("Property and Violent Crime per 100,000") + xlab("Year") +
+    ggtitle("Property and Violent Crime in Arizona") 
+ggsave(filename = "~/Google Drive/SI/DataScience/Presentations/Tuscon_April2017/bargraph.png", width=6.0, height=6.0/1.5)
+ 
+azcrime2 %>%
+  filter(type=="Violent_Crime_rate" | type=="Property_Crime_rate") %>%
+  group_by(Year) %>%
+  ggplot(aes(x = Year, y = rate, fill = type)) +
+    geom_boxplot() +
+    ylab("Property and Violent Crime per 100,000") + xlab("Year") +
+    ggtitle("Property and Violent Crime in Arizona")
+ggsave(filename = "~/Google Drive/SI/DataScience/Presentations/Tuscon_April2017/boxplot.png", width=6.0, height=6.0/1.5)
+
+```
